@@ -5,7 +5,6 @@ void main() {
     MaterialApp(home: Home()),
   );
 }
-
 class Home extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -25,17 +24,11 @@ class Home extends StatelessWidget {
         backgroundColor: Colors.red[600],
       ),
       body: Center(
-        child: Text(
-          'Welcome Sci Comm',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 2,
-            color: Colors.grey[600],
-            fontFamily: 'IndieFlower',
+          child: ElevatedButton(
+            onPressed:(){},
+            child:Text("click me"),
           ),
-        ),
-      ),
+          ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           print('Button pressed!');
@@ -43,5 +36,18 @@ class Home extends StatelessWidget {
         child: Text('click'),
       ),
     );
+  }
+}
+class butter extends StatefulWidget {
+  const butter({super.key});
+
+  @override
+  State<butter> createState() => _butterState();
+}
+
+class _butterState extends State<butter> {
+  @override
+  Widget build(BuildContext context) {
+    return const Placeholder();
   }
 }
