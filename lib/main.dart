@@ -5,6 +5,7 @@ void main() {
     MaterialApp(home: Home()),
   );
 }
+
 class Home extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -24,11 +25,11 @@ class Home extends StatelessWidget {
         backgroundColor: Colors.red[600],
       ),
       body: Center(
-          child: ElevatedButton(
-            onPressed:(){},
-            child:Text("click me"),
-          ),
-          ),
+        child: ElevatedButton(
+          onPressed: () {},
+          child: Text("click me"),
+        ),
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           print('Button pressed!');
@@ -38,16 +39,43 @@ class Home extends StatelessWidget {
     );
   }
 }
-class butter extends StatefulWidget {
-  const butter({super.key});
+
+class TextInputWiget extends StatefulWidget {
+  const TextInputWiget({super.key});
 
   @override
-  State<butter> createState() => _butterState();
+  State<TextInputWiget> createState() => _TextInputWigetState();
 }
 
-class _butterState extends State<butter> {
+class _TextInputWigetState extends State<TextInputWiget> {
+  final controller = TextEditingController();
+  //String text = "";
+  //@override
+  //void dispose() {
+  //super.dispose();
+  //controller.dispose();
+  //}
+  //void changeText(text){
+  //setState(() {
+  //this.text = text;
+  //});
+  //}
+
   @override
   Widget build(BuildContext context) {
-    return const Placeholder();
+    return TextField(
+         controller: this.controller,
+        decoration: InputDecoration(
+            prefixIcon: Icon(Icons.message),
+            labelText: "Enter A message or somesthing",
+            suffixIcon: IconButton(
+              icon: Icon(Icons.send),
+              splashColor: Colors.blue,
+              tooltip: "Send",
+              onPressed: () => {},
+            ))
+        //onChanged: (text) => this.changeText(text),
+        );
+    //Text(this.text)
   }
 }

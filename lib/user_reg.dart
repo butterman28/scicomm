@@ -1,0 +1,132 @@
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:image_picker/image_picker.dart';
+
+class RegistrationPage extends StatefulWidget {
+  @override
+  _RegistrationPageState createState() => _RegistrationPageState();
+}
+
+class _RegistrationPageState extends State<RegistrationPage> {
+  TextEditingController _usernameController = TextEditingController();
+  TextEditingController _emailController = TextEditingController();
+  TextEditingController _passwordController = TextEditingController();
+  TextEditingController _ageController = TextEditingController();
+  TextEditingController _areaOfStudyController = TextEditingController();
+
+  File? _image;
+  final picker = ImagePicker();
+
+  Future<void> _getImage() async {
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    setState(() {
+      if (pickedFile != null) {
+        _image = File(pickedFile.path);
+      } else {
+        print('No image selected.');
+      }
+    });
+  }
+
+  Future<void> _registerUser() async {
+    final url =
+        'http://your_domain.com/register/'; // Replace with your Django server URL
+    final response = await http.post(
+      Uri.parse(url),
+      body: jsonEncode({
+        'username': _usernameController.text,
+        'email': _emailController.text,
+        'password': _passwordController.text,
+        'age': _ageController.text,
+        'area_of_study': _areaOfStudyController.text,
+        // You can include additional fields as needed
+      }),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 201) {
+      // User registration successful
+      // Upload image if available
+      if (_image != null) {
+        // Code to upload image to server
+        // You can use packages like http or Dio for image upload
+        // Example: http.post(uploadUrl, body: {'image': _image});
+      }
+      // Navigate to login page or do something else
+      print('User registered successfully');
+    } else {
+      // User registration failed
+      final responseData = jsonDecode(response.body);
+      final errorMessage = responseData['error'];
+      print('Registration failed: $errorMessage');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('User Registration'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              TextField(
+                controller: _usernameController,
+                decoration: InputDecoration(labelText: 'Username'),
+              ),
+              SizedBox(height: 12),
+              TextField(
+                controller: _emailController,
+                decoration: InputDecoration(labelText: 'Email'),
+              ),
+              SizedBox(height: 12),
+              TextField(
+                controller: _passwordController,
+                decoration: InputDecoration(labelText: 'Password'),
+                obscureText: true,
+              ),
+              SizedBox(height: 12),
+              TextField(
+                controller: _ageController,
+                decoration: InputDecoration(labelText: 'Age'),
+                keyboardType: TextInputType.number,
+              ),
+              SizedBox(height: 12),
+              TextField(
+                controller: _areaOfStudyController,
+                decoration: InputDecoration(labelText: 'Area of Study'),
+              ),
+              SizedBox(height: 12),
+              _image != null
+                  ? Image.file(
+                      _image!,
+                      height: 100,
+                      width: 100,
+                      fit: BoxFit.cover,
+                    )
+                  : SizedBox(),
+              ElevatedButton(
+                onPressed: _getImage,
+                child: Text('Pick Image'),
+              ),
+              SizedBox(height: 12),
+              ElevatedButton(
+                onPressed: _registerUser,
+                child: Text('Register'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
