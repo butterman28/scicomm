@@ -14,7 +14,6 @@ class _RegistrationPageState extends State<RegistrationPage> {
   TextEditingController _emailController = TextEditingController();
   TextEditingController _passwordController = TextEditingController();
   TextEditingController _ageController = TextEditingController();
-  TextEditingController _areaOfStudyController = TextEditingController();
 
   File? _image;
   final picker = ImagePicker();
@@ -33,7 +32,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
 
   Future<void> _registerUser() async {
     final url =
-        'http://your_domain.com/register/'; // Replace with your Django server URL
+        'http://127.0.0.1:8000/users/register/'; // Replace with your Django server URL
     final response = await http.post(
       Uri.parse(url),
       body: jsonEncode({
@@ -41,7 +40,6 @@ class _RegistrationPageState extends State<RegistrationPage> {
         'email': _emailController.text,
         'password': _passwordController.text,
         'age': _ageController.text,
-        'area_of_study': _areaOfStudyController.text,
         // You can include additional fields as needed
       }),
       headers: {
@@ -54,8 +52,8 @@ class _RegistrationPageState extends State<RegistrationPage> {
       // Upload image if available
       if (_image != null) {
         // Code to upload image to server
-        // You can use packages like http or Dio for image upload
-        // Example: http.post(uploadUrl, body: {'image': _image});
+        // You can use packages like http or Dio for image uploa
+        http.post(Uri.parse(url), body: {'image': _image});
       }
       // Navigate to login page or do something else
       print('User registered successfully');
@@ -99,11 +97,6 @@ class _RegistrationPageState extends State<RegistrationPage> {
                 controller: _ageController,
                 decoration: InputDecoration(labelText: 'Age'),
                 keyboardType: TextInputType.number,
-              ),
-              SizedBox(height: 12),
-              TextField(
-                controller: _areaOfStudyController,
-                decoration: InputDecoration(labelText: 'Area of Study'),
               ),
               SizedBox(height: 12),
               _image != null

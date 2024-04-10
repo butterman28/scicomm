@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'user_reg.dart';
+import 'authenticateUser.dart';
 
 void main() {
   runApp(
-    MaterialApp(home: Home()),
+    MaterialApp(home: RegistrationPage()),
   );
 }
 
@@ -64,7 +66,7 @@ class _TextInputWigetState extends State<TextInputWiget> {
   @override
   Widget build(BuildContext context) {
     return TextField(
-         controller: this.controller,
+        controller: this.controller,
         decoration: InputDecoration(
             prefixIcon: Icon(Icons.message),
             labelText: "Enter A message or somesthing",

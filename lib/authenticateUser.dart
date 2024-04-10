@@ -1,10 +1,11 @@
 //import 'package:flutter/material.dart';
 import 'storesessionid.dart';
 import 'package:http/http.dart' as http;
+
 Future<void> authenticateUser(String username, String password) async {
   try {
     final response = await http.post(
-      Uri.parse('https://your-django-server.com/login/'),
+      Uri.parse('http://127.0.0.1:8000/users/login/'),
       body: {
         'username': username,
         'password': password,
@@ -19,8 +20,7 @@ Future<void> authenticateUser(String username, String password) async {
       if (sessionId != null) {
         storeSessionId(sessionId);
         print('Authentication successful!');
-      }
-      else{
+      } else {
         print('something is wrong ');
       }
     } else {
