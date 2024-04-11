@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
+//import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 
 class RegistrationPage extends StatefulWidget {
   @override
@@ -23,7 +25,13 @@ class _RegistrationPageState extends State<RegistrationPage> {
 
     setState(() {
       if (pickedFile != null) {
-        _image = File(pickedFile.path);
+        if (kIsWeb) {
+          //_image = Image.network(pickedFile.path);
+          _image = File(pickedFile.path);
+        } else {
+          _image = File(pickedFile.path);
+        }
+        //_image = File(pickedFile.path);
       } else {
         print('No image selected.');
       }
@@ -100,13 +108,13 @@ class _RegistrationPageState extends State<RegistrationPage> {
               ),
               SizedBox(height: 12),
               _image != null
-                  ? Image.file(
-                      _image!,
-                      height: 100,
-                      width: 100,
-                      fit: BoxFit.cover,
-                    )
-                  : SizedBox(),
+                  ? kIsWeb
+                      ? Image.network(_image!.path,
+                          height: 100, width: 100, fit: BoxFit.cover)
+                      : Image.file(_image!,
+                          height: 100, width: 100, fit: BoxFit.cover)
+                  : Text(
+                      'No image selected'), // Display a message if no image is selected
               ElevatedButton(
                 onPressed: _getImage,
                 child: Text('Pick Image'),
