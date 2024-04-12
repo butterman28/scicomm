@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'userlogin.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
@@ -48,6 +49,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
         'email': _emailController.text,
         'password': _passwordController.text,
         'age': _ageController.text,
+        //'image': _image
         // You can include additional fields as needed
       }),
       headers: {
@@ -58,14 +60,19 @@ class _RegistrationPageState extends State<RegistrationPage> {
     if (response.statusCode == 201) {
       // User registration successful
       // Upload image if available
-      if (_image != null) {
-        // Code to upload image to server
-        // You can use packages like http or Dio for image uploa
-        http.post(Uri.parse(url), body: {'image': _image});
-      }
-      // Navigate to login page or do something else
+      //if (_image != null) {
+      // Code to upload image to server
+      // You can use packages like http or Dio for image uploa
+      //http.post(Uri.parse(url), body: {'image': _image});
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => LoginScreen()),
+      );
       print('User registered successfully');
-    } else {
+    }
+    // Navigate to login page or do something else
+
+    else {
       // User registration failed
       final responseData = jsonDecode(response.body);
       final errorMessage = responseData['error'];

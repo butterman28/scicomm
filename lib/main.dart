@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'user_reg.dart';
 import 'authenticateUser.dart';
+import 'userlogin.dart';
 
 void main() {
   runApp(
-    MaterialApp(home: RegistrationPage()),
+    //MaterialApp(home: RegistrationPage()),
+    MaterialApp(home: LoginScreen()),
   );
 }
 
