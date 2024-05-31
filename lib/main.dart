@@ -6,7 +6,7 @@ import 'userlogin.dart';
 void main() {
   runApp(
     //MaterialApp(home: RegistrationPage()),
-    MaterialApp(home: LoginScreen()),
+    MaterialApp(home: RegistrationPage()),
   );
 }
 
