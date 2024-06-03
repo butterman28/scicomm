@@ -1,14 +1,15 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'jwt.dart';
 
 class Post {
   final int id;
   final String title;
   final String content;
   final String? base64Image; // Define base64Image property
-  int likes;
-  List<String> comments;
+  List<dynamic> likes;
+  List<dynamic> comments;
 
   Post({
     required this.id,
@@ -35,19 +36,32 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<List<Post>> fetchPosts() async {
-    final response = await http.get(Uri.parse('YOUR_API_ENDPOINT_HERE'));
+    String? access1 = await AuthService.getAccessToken();
+    //print(access1);
+    final response = await http.get(
+      Uri.parse('http://127.0.0.1:8000/blog/post/'),
+      headers: {
+          'Authorization': 'Bearer $access1', 
+          'Content-Type': 'application/json',
+        },
+
+      );
+  
     if (response.statusCode == 200) {
+      print(response.body);
       final List<dynamic> data = jsonDecode(response.body);
       return data.map((postJson) {
+        //print(access1);
         return Post(
           id: postJson['id'],
           title: postJson['title'],
           content: postJson['content'],
           base64Image: postJson['image'], // Assuming 'image' field contains base64 image
-          likes: postJson['likes'],
-          comments: List<String>.from(postJson['comments']),
+          likes: List<dynamic>.from(postJson['like']),
+          comments: List<dynamic>.from(postJson['comments']),
         );
       }).toList();
+      //print(access1);
     } else {
       throw Exception('Failed to load posts');
     }
@@ -78,7 +92,7 @@ class _HomePageState extends State<HomePage> {
                     children: [
                       Text(post.content),
                       SizedBox(height: 8),
-                      Text('Likes: ${post.likes}'),
+                      Text('Likes: ${post.likes.length}'),
                       SizedBox(height: 4),
                       Text('Comments: ${post.comments.length}'),
                     ],
