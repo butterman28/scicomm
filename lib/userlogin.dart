@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'storesessionid.dart';
 import 'jwt.dart';
+import 'userdetails.dart';
 import 'package:http/http.dart' as http;
 import 'main.dart';
 import 'home.dart';
@@ -43,9 +44,11 @@ class _LoginScreenState extends State<LoginScreen> {
         }),
       );
       if (response1.statusCode == 200) {
-        print(response1.body);
+        //print(response1.body);
         Map<String, dynamic> responseBody = json.decode(response1.body);
-
+        final username = responseBody['username'];
+        final email = responseBody['email'];
+        await saveUserDataLocally(username, email);
         String accessToken =responseBody['tokens']['access'];
         String refreshToken = responseBody['tokens']['refresh'];
         //print('Access Token: $accessToken');

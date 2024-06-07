@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'jwt.dart';
-
+import 'userdetails.dart';
 class Post {
   final int id;
   final String title;
@@ -20,6 +20,10 @@ class Post {
     required this.comments,
   });
 }
+String? username;
+String? email;
+
+String welcome ="Welcome, $username";
 
 class HomePage extends StatefulWidget {
   @override
@@ -34,10 +38,20 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     _postsFuture = fetchPosts();
   }
+  Future<List<String?>> welcomeuser() async {
+   // String? access1 = await AuthService.getAccessToken();
+    username = await getUsername();
+    email = await getEmail();
+    // After the values are fetched, print the welcome message
+    return [username,email];
+}
 
   Future<List<Post>> fetchPosts() async {
     String? access1 = await AuthService.getAccessToken();
-    //print(access1);
+    username = await getUsername();
+    email = await getEmail();
+    //print(username);
+    print("welcome$username");
     final response = await http.get(
       Uri.parse('http://127.0.0.1:8000/blog/post/'),
       headers: {
@@ -46,9 +60,8 @@ class _HomePageState extends State<HomePage> {
         },
 
       );
-  
+
     if (response.statusCode == 200) {
-      print(response.body);
       final List<dynamic> data = jsonDecode(response.body);
       return data.map((postJson) {
         //print(access1);
@@ -72,6 +85,62 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         title: Text('Home Page'),
       ),
+      drawer: Drawer(
+        child: FutureBuilder<List<String?>>(
+          future: welcomeuser(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return CircularProgressIndicator(); // Display loading indicator while waiting
+            } else if (snapshot.hasError) {
+                return Text('Error: ${snapshot.error}');
+            } else {
+        // Snapshot data is a list with the results of both futures
+            final List<String?> data = snapshot.data!;
+            final String username = data[0] ?? "Unknown";
+            final String email = data[1] ?? "Unknown";
+            return ListView(
+              children: [
+                UserAccountsDrawerHeader(
+                  decoration: BoxDecoration(color: const Color(0xff764abc)),
+                  accountName: snapshot.connectionState == ConnectionState.waiting
+                  ? Text("Loading...") // Display loading indicator while waiting
+                  : Text(username ?? "Unknown"), // Display username or "Unknown" if null
+                  accountEmail: Text(
+                  email,
+                  style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  ), 
+                ),
+              currentAccountPicture: FlutterLogo(),
+            ),
+// Other properties..
+              ListTile(
+                leading: Icon(
+                  Icons.home,
+                ),
+                title: const Text('Page 1'),
+                onTap: () {
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                leading: Icon(
+                  Icons.train,
+                ),
+                title: const Text('Page 1'),
+                onTap: () {
+                  Navigator.pop(context);
+                },
+              ),
+        ]
+      );
+     }
+    }
+    ),
+  ),    
+
+      
+      // Important: Remove any padding from the ListView.
        body: FutureBuilder<List<Post>>(
         future: _postsFuture,
         builder: (context, snapshot) {
