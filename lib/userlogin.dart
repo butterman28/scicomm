@@ -15,7 +15,6 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-
   Future<int> _authenticateUser(String username, String password) async {
     final response =
         await http.get(Uri.parse('http://127.0.0.1:8000/users/login/'));
@@ -48,7 +47,8 @@ class _LoginScreenState extends State<LoginScreen> {
         Map<String, dynamic> responseBody = json.decode(response1.body);
         final username = responseBody['username'];
         final email = responseBody['email'];
-        await saveUserDataLocally(username, email);
+        final pro_image = responseBody['profilephoto'];
+        await saveUserDataLocally(username, email, pro_image);
         String accessToken =responseBody['tokens']['access'];
         String refreshToken = responseBody['tokens']['refresh'];
         //print('Access Token: $accessToken');

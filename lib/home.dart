@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'jwt.dart';
 import 'userdetails.dart';
+import 'dart:typed_data';
+import "navdraw.dart";
+import "profile.dart";
 class Post {
   final int id;
   final String title;
@@ -22,6 +25,7 @@ class Post {
 }
 String? username;
 String? email;
+String? proimage;
 
 String welcome ="Welcome, $username";
 
@@ -38,18 +42,19 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     _postsFuture = fetchPosts();
   }
+  
   Future<List<String?>> welcomeuser() async {
    // String? access1 = await AuthService.getAccessToken();
     username = await getUsername();
     email = await getEmail();
+    proimage = await getproimage();
     // After the values are fetched, print the welcome message
-    return [username,email];
+    return [username,email,proimage];
 }
 
   Future<List<Post>> fetchPosts() async {
     String? access1 = await AuthService.getAccessToken();
-    username = await getUsername();
-    email = await getEmail();
+    
     //print(username);
     print("welcome$username");
     final response = await http.get(
@@ -98,6 +103,16 @@ class _HomePageState extends State<HomePage> {
             final List<String?> data = snapshot.data!;
             final String username = data[0] ?? "Unknown";
             final String email = data[1] ?? "Unknown";
+            final String proimage = data[2] ?? "Unknown";
+            // Decoding base64 string into bytes
+            Uint8List bytes = base64Decode(proimage);
+
+            // Creating an image widget from the bytes
+            Widget accountImage = Image.memory(
+              bytes,
+              width: 100, // Adjust width as needed
+              height: 100, // Adjust height as needed
+            );
             return ListView(
               children: [
                 UserAccountsDrawerHeader(
@@ -111,16 +126,20 @@ class _HomePageState extends State<HomePage> {
                   fontWeight: FontWeight.bold,
                   ), 
                 ),
-              currentAccountPicture: FlutterLogo(),
+              currentAccountPicture: accountImage,
             ),
 // Other properties..
               ListTile(
                 leading: Icon(
                   Icons.home,
                 ),
-                title: const Text('Page 1'),
+                title: const Text('Profile'),
                 onTap: () {
-                  Navigator.pop(context);
+                  Navigator.pop(context); // Close the drawer
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => Profile()),
+                  );
                 },
               ),
               ListTile(
