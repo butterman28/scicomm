@@ -24,10 +24,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (response.statusCode == 200) {
       final cookieHeader = response;
-      print(response.body);
+      //print(response.body);
       //print(response.headers.keys.toList());
       //print(response.headers.values.toList());
-      print(response.headers['set-cookie']);
+      //print(response.headers['set-cookie']);
       //String csr = csrfToken.toString();
       //print(csr);
       final response1 = await http.post(
@@ -48,7 +48,15 @@ class _LoginScreenState extends State<LoginScreen> {
         final username = responseBody['username'];
         final email = responseBody['email'];
         final pro_image = responseBody['profilephoto'];
-        await saveUserDataLocally(username, email, pro_image);
+        final age = responseBody['age'];
+        String dob = "";
+        if (responseBody['date_of_birth'] == null ){
+          dob = "Unknown";
+        }else{
+          dob = responseBody['date_of_birth'];
+        }
+        //final dob = responseBody['date_of_birth'];
+        await saveUserDataLocally(username, email, pro_image,age,dob);
         String accessToken =responseBody['tokens']['access'];
         String refreshToken = responseBody['tokens']['refresh'];
         //print('Access Token: $accessToken');

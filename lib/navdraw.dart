@@ -48,7 +48,7 @@ class NavDrawer extends StatelessWidget {
 // Other properties..
               ListTile(
                 leading: Icon(
-                  Icons.home,
+                  Icons.person,
                 ),
                 title: const Text('Profile'),
                 onTap: () {
@@ -61,7 +61,7 @@ class NavDrawer extends StatelessWidget {
               ),
               ListTile(
                 leading: Icon(
-                  Icons.train,
+                   Icons.home,
                 ),
                 title: const Text('Home'),
                 onTap: () {
@@ -71,8 +71,23 @@ class NavDrawer extends StatelessWidget {
                     MaterialPageRoute(builder: (context) => HomePage()),
                   );
                 },
-                
               ),
+              username != "Oluwadara"
+              ? ListTile(
+                leading: Icon(
+                   Icons.home,
+                ),
+                title: const Text('Create A Post'),
+                onTap: () {
+                  Navigator.pop(context); // Close the drawer
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => HomePage()),
+                  );
+                },
+                
+              )
+              : SizedBox.shrink(),
         ]
       );
      }

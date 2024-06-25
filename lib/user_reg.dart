@@ -23,6 +23,26 @@ class _RegistrationPageState extends State<RegistrationPage> {
   TextEditingController _emailController = TextEditingController();
   TextEditingController _passwordController = TextEditingController();
   TextEditingController _ageController = TextEditingController();
+  TextEditingController _dobController = TextEditingController();
+  DateTime? _selectedDate;
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null && picked != _selectedDate) {
+      setState(() {
+        _selectedDate = picked;
+        String dob = '${_selectedDate!.year}-${_selectedDate!.month}-${_selectedDate!.day}';
+        _dobController.text = dob;
+        print(_dobController.text); // Store the date as text
+      });
+    }
+  }
+  
   
   //File? _image; // Define the variable outside of the conditional block
   //String? _imageUrl;
@@ -63,20 +83,19 @@ class _RegistrationPageState extends State<RegistrationPage> {
     String base64Image;
     if (_image != null) {
       FileSystemEntity file = File(_image!);
-      print(_image);
-      print("before");
       // Read image file if _image is not null
       //imageBytes = File(_image!).readAsBytesSync();
       //imageBytes = await (file as File).readAsBytes();
       //imageBytes = await (file as File).readAsBytes();
       base64Image = base64Encode(imageBytes!);
-      const url = 'http://127.0.0.1:8000/users/signup/';
+      const url = 'http://127.0.0.1:8000/users/signup/';      
       final response = await http.post(
         Uri.parse(url),
         body: jsonEncode({
           'email': _emailController.text,
           'username': _usernameController.text,
           'password': _passwordController.text,
+          'date_of_birth':_dobController.text,
           "profile": {
             'age': _ageController.text,
             'image': base64Image
@@ -87,6 +106,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
           'Content-Type': 'application/json',
         },
       );
+      print("before");
       //print(base64Image);
       //print("after");
       if (response.statusCode == 201) {
@@ -126,12 +146,13 @@ class _RegistrationPageState extends State<RegistrationPage> {
       appBar: AppBar(
         title: Text('User Registration'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+      body: Container(
+        padding: EdgeInsets.all(20.0),
+  
+          child: ListView(
+            //crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              SizedBox(height: 12),
               TextField(
                 controller: _usernameController,
                 decoration: InputDecoration(labelText: 'Username'),
@@ -154,6 +175,18 @@ class _RegistrationPageState extends State<RegistrationPage> {
                 keyboardType: TextInputType.number,
               ),
               SizedBox(height: 12),
+              ElevatedButton(
+                onPressed: () {
+                _selectDate(context);
+              },    
+            child: Text(
+              _selectedDate == null
+                  ? 'Select Date'
+                  : '${_selectedDate!.year}-${_selectedDate!.month}-${_selectedDate!.day}',
+              style: TextStyle(fontSize: 18),
+            ),
+          ),
+                SizedBox(height: 12),
               _image != null
                   ? kIsWeb
                       ? Image.network(_image!,
@@ -186,7 +219,6 @@ class _RegistrationPageState extends State<RegistrationPage> {
             ],
           ),
         ),
-      ),
-    );
+      );
   }
 }
