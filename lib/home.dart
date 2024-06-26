@@ -1,4 +1,5 @@
 import 'dart:convert';
+//import 'dart:ffi';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'jwt.dart';
@@ -30,6 +31,14 @@ class Post {
     }
     return false; // Username not found in likes
   }
+  bool iscommentexisting(String username) {
+    for (var comment in comments) {
+      if (comment['author']['username'] == username) {
+        return true; // Username found in likes
+      }
+    }
+    return false; // Username not found in likes
+  }
   factory Post.fromJson(Map<String, dynamic> json) {
     return Post(
       id: json['id'],
@@ -54,10 +63,26 @@ class Post {
       }
     }
     }
+    void deletecommentByid(int id) {
+    // Iterate through the likes list
+    for (int i = 0; i < comments.length; i++) {
+      // Check if the username matches
+      if (comments[i]['id']== id) {
+        //print(comments[i]['id']);
+        // Remove the like entry
+        comments.removeAt(i);
+        //print(comments);
+        // Assuming you only want to remove one entry, break out of the loop
+        break;
+      }
+    }
+    }
 }
 String? username;
 String? email;
 String? proimage;
+bool editit = false;
+var commentid;
 //var _likeColor;
 Map<int, Color?> _likeColor = {};
 Map<int, bool> likedPosts = {};
@@ -72,6 +97,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   late Future<List<Post>> _postsFuture;
+  TextEditingController _commentController = TextEditingController();
 
   @override
   void initState() {
@@ -87,6 +113,75 @@ class _HomePageState extends State<HomePage> {
     proimage = await getproimage();
     // After the values are fetched, print the welcome message
     return [username,email,proimage];
+}
+Future<Map<String, dynamic>> commentform(int postid,String content)async{
+  var data = jsonEncode({
+    'content': content,
+    // Add more fields as needed
+  });
+  String? access1 = await AuthService.getAccessToken();
+  final url = Uri.parse('http://127.0.0.1:8000/blog/comment/$postid/');
+  final response = await http.post(
+    url,
+    headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+      'Authorization': 'Bearer $access1',
+    },
+    body:data,
+  );
+  Map<String, dynamic> responseBody = json.decode(response.body);
+  Map<String, dynamic> comment = {};
+  if (response.statusCode == 201 ) {
+    comment = responseBody['data'];
+  }else{
+    comment = {};
+  }
+  return comment;
+
+}
+Future<Map<String, dynamic>> commentedit(int commentid,String content)async{
+  var data = jsonEncode({
+    'content': content,
+    // Add more fields as needed
+  });
+  String? access1 = await AuthService.getAccessToken();
+  final url = Uri.parse('http://127.0.0.1:8000/blog/commentadjust/$commentid/');
+  final response = await http.put(
+    url,
+    headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+      'Authorization': 'Bearer $access1',
+    },
+    body:data,
+  );
+  Map<String, dynamic> responseBody = json.decode(response.body);
+  Map<String, dynamic> comment = {};
+  if (response.statusCode == 200 ) {
+    comment = responseBody['data'];
+    print(comment);
+  }else{
+    comment = {};
+  }
+  return comment;
+
+}
+Future<bool> deletecommentform(int commentid ) async {
+  String? access1 = await AuthService.getAccessToken();
+  final url = Uri.parse('http://127.0.0.1:8000/blog/commentadjust/$commentid/');
+  final response = await http.delete(
+    url,
+    headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+      'Authorization': 'Bearer $access1',
+    }
+  );
+  if (response.statusCode == 200 ) {
+    return true;
+
+  }
+  else {
+    return false;
+  }
 }
 Future<Map<String, dynamic>> likeform(int postid ) async {
   //var likes;
@@ -132,7 +227,7 @@ Future<Map<String, dynamic>> likeform(int postid ) async {
     String? access1 = await AuthService.getAccessToken();
     
     //print(username);
-    print("welcome$username");
+    //print("welcome$username");
     final response = await http.get(
       Uri.parse('http://127.0.0.1:8000/blog/post/'),
       headers: {
@@ -325,40 +420,176 @@ Future<Map<String, dynamic>> likeform(int postid ) async {
                       showModalBottomSheet(
                         context: context,
                         builder: (BuildContext context) {
+                          return StatefulBuilder(builder:(BuildContext context, StateSetter setState){
                         return Container(
                         padding: EdgeInsets.all(16.0),
                           child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
+                    
                     children: <Widget>[
+                      Expanded(child:
+                      ListView.builder(
+              itemCount: post.comments.length,
+              itemBuilder: (context, index) {
+                 //final post = posts[index];
+                final comments = post.comments[index];
+                //print(comments);
+                //print(post.likes);
+                Color iconColor = post.isLikedByUser(username!) ? Colors.red : Colors.grey;
+                //for (var i = 0; i < comments.length; i++) {
+                  //print
+                    //var comment = comments[i];
+                //if (post.iscommentexisting(comments["author"]["username"])){
+                
+                return ListTile(
+                  leading: CircleAvatar(
+                    backgroundImage: MemoryImage(base64Decode(comments["author"]['profile']['image'])),
+                      //child: Text('${index + 1}'),
+                  ),
+                  title: Text(comments["content"]),
+                  subtitle: 
+                   Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      //Text(post.content),
+                      SizedBox(height: 8),
+                      Text('Created At: ${comments["created_at"]}'),
+                      SizedBox(height: 4),
+                      Text('By: ${comments["author"]['username']}'),
+                    ],
+                  ),
+                  //Text(comments["created_at"]),
+                  trailing:
+                  username! == comments["author"]["username"]
+                  ? Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      mainAxisSize: MainAxisSize.min, // Align items to the end of the row
+                  children: [
+                  IconButton(
+                    icon: Icon(Icons.delete, color: Colors.red), 
+                    onPressed: () async{
+                      bool status = await deletecommentform(comments["id"]);
+                      //print(status);
+                      if (status == true){
+                        setState(() {
+                          //print('Before deletion: ${post.comments}');
+                        post.deletecommentByid(comments["id"]);
+                        //print('after deletion: ${post.comments}');
+                        //comments = post.comments;
+                        });
+                      }
+                      //print(comments);
+                    }
+                  ),
+                  
+                  IconButton(
+                    icon: Icon(Icons.edit, color: Colors.grey), 
+                    onPressed: () {
+                      setState((){
+                        _commentController.text = comments["content"];
+                        editit = true;
+                        commentid = comments["id"];
+
+                      });
+                    }
+                  )
+
+                  ]              
+                  )
+                  :SizedBox.shrink(),
+                  
+                );
+                
+                
+              }
+                ),
+                          ),
                       Text(
                         'Add a comment',
                         style: TextStyle(fontSize: 18.0),
                       ),
                       SizedBox(height: 10.0),
                       TextField(
+                        controller: _commentController,
                         decoration: InputDecoration(
                           hintText: 'Enter your comment',
                           border: OutlineInputBorder(),
                         ),
-                        maxLines: 3,
+                        maxLines: 1,
                         keyboardType: TextInputType.multiline,
                       ),
                       SizedBox(height: 10.0),
                       Align(
                         alignment: Alignment.centerRight,
-                        child: ElevatedButton(
-                          onPressed: () {
+                        child:editit == false
+                         ? ElevatedButton(
+                          onPressed: () async {
+                            Map<String, dynamic> newcomment = await commentform(post.id,_commentController.text);
+                            print(newcomment);
+                            if (newcomment != {}){
+                              setState(() {
+                                post.comments.add(newcomment);
+                              _commentController.text = "";
+                            });
+                            }
+                            
                             // Handle saving the comment or any action
-                            Navigator.pop(context); // Close the bottom sheet
+                            //Navigator.pop(context); // Close the bottom sheet
                           },
                           child: Text('Post'),
-                        ),
+                        ):
+                        Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      mainAxisSize: MainAxisSize.min, // Align items to the end of the row
+                  children: [
+                         ElevatedButton(
+                   // icon: Icon(Icons.close, color: Colors.grey), 
+                    onPressed: () {
+                      setState((){
+                        editit=false;
+                        _commentController.text = "";
+                      }
+                      );
+                      },
+                      child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: <Widget>[
+                            Icon(Icons.close,color: Colors.red),
+                            SizedBox(width: 8.0), // Adjust spacing as needed
+                            Text('cancel'),
+            ],
+          ),
+                      ),
+
+                        ElevatedButton(
+                          onPressed: () async {
+                            Map<String, dynamic> newcomment = await commentedit(commentid,_commentController.text);
+                            print(newcomment);
+                            if (newcomment != {}){
+                              setState(() {
+                                post.deletecommentByid(commentid);
+                                post.comments.add(newcomment);
+                              _commentController.text = "";
+                              editit = false;
+                            });
+                            }
+                            
+                            // Handle saving the comment or any action
+                            //Navigator.pop(context); // Close the bottom sheet
+                          },
+                          child: Text('edit'),
+                        ),]
+                        )
                       ),
                     ],
                   ),
                 );
-                }
+                          },     
+                  );
+                  
+                  },
+                
                 );  
                     }
                   )
