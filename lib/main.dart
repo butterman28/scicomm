@@ -2,12 +2,29 @@ import 'package:flutter/material.dart';
 import 'user_reg.dart';
 import 'authenticateUser.dart';
 import 'userlogin.dart';
-
+import "home.dart";
+import 'package:provider/provider.dart';
 void main() {
   runApp(
     //MaterialApp(home: RegistrationPage()),
-    MaterialApp(home: RegistrationPage()),
+    MyApp()
   );
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (context) => PostProvider(),
+      child: MaterialApp(
+        title: 'Flutter Demo',
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+        ),
+        home: RegistrationPage(),
+      ),
+    );
+  }
 }
 
 class Home extends StatelessWidget {

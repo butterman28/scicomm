@@ -4,6 +4,7 @@ import "profile.dart";
 import 'dart:convert';
 import 'dart:typed_data';
 import 'home.dart';
+import 'createpost.dart';
 class NavDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -75,14 +76,14 @@ class NavDrawer extends StatelessWidget {
               username != "Oluwadara"
               ? ListTile(
                 leading: Icon(
-                   Icons.home,
+                   Icons.publish,
                 ),
                 title: const Text('Create A Post'),
                 onTap: () {
                   Navigator.pop(context); // Close the drawer
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => HomePage()),
+                    MaterialPageRoute(builder: (context) => CreatePostPage()),
                   );
                 },
                 

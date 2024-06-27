@@ -7,6 +7,7 @@ import 'userdetails.dart';
 import 'dart:typed_data';
 import "navdraw.dart";
 import "profile.dart";
+import 'createpost.dart';
 class Post {
   final int id;
   final String title;
@@ -78,6 +79,18 @@ class Post {
     }
     }
 }
+class PostProvider extends ChangeNotifier {
+  List<dynamic> _posts = [];
+
+  List<dynamic> get posts => _posts;
+
+  void addPost(Map<String, dynamic> newPost) {
+    posts.add(newPost);
+    notifyListeners(); // Notify listeners that the list has changed
+  }
+
+}
+
 String? username;
 String? email;
 String? proimage;
@@ -87,7 +100,8 @@ var commentid;
 Map<int, Color?> _likeColor = {};
 Map<int, bool> likedPosts = {};
 var color;
-
+List<Post> posts =[];
+//var post;
 String welcome ="Welcome, $username";
 
 class HomePage extends StatefulWidget {
@@ -105,6 +119,11 @@ class _HomePageState extends State<HomePage> {
     _postsFuture = fetchPosts();
 
   }
+  void addPost(Post newPost) {
+          setState(() {
+          posts.add(newPost);
+        });
+        }
   
   Future<List<String?>> welcomeuser() async {
    // String? access1 = await AuthService.getAccessToken();
@@ -255,6 +274,7 @@ Future<Map<String, dynamic>> likeform(int postid ) async {
       throw Exception('Failed to load posts');
     }
   }
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -325,14 +345,14 @@ Future<Map<String, dynamic>> likeform(int postid ) async {
               username != "Oluwadara"
               ? ListTile(
                 leading: Icon(
-                   Icons.home,
+                   Icons.publish,
                 ),
                 title: const Text('Create A Post'),
                 onTap: () {
                   Navigator.pop(context); // Close the drawer
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => HomePage()),
+                    MaterialPageRoute(builder: (context) => CreatePostPage()),
                   );
                 },
                 
@@ -355,7 +375,7 @@ Future<Map<String, dynamic>> likeform(int postid ) async {
           } else if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           } else {
-            final List<Post> posts = snapshot.data!;
+            posts = snapshot.data!;
             return ListView.builder(
               itemCount: posts.length,
               itemBuilder: (context, index) {
