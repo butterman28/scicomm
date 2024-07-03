@@ -24,10 +24,11 @@ class _CreatePostPageState extends State<CreatePostPage> {
 
   Future<void> _getImage() async {
     //final pickedImage = await ImagePickerWeb.pickImage(outputType: ImageType.bytes);
-    final XFile? pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    final XFile? pickedFile =
+        await picker.pickImage(source: ImageSource.gallery);
     //final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-    imageBytes =await pickedFile!.readAsBytes();
-    setState(()  {
+    imageBytes = await pickedFile!.readAsBytes();
+    setState(() {
       if (pickedFile != null) {
         if (kIsWeb) {
           //_image = Image.network(pickedFile.path);
@@ -60,7 +61,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
       //imageBytes = await (file as File).readAsBytes();
       base64Image = base64Encode(imageBytes!);
       //print(base64Image);
-      const url = 'http://127.0.0.1:8000/blog/post/';      
+      const url = 'http://127.0.0.1:8000/blog/post/';
       final response = await http.post(
         Uri.parse(url),
         body: jsonEncode({
@@ -68,50 +69,45 @@ class _CreatePostPageState extends State<CreatePostPage> {
           'content': _contentController.text,
           'image': base64Image,
           // You can include additional fields as needed
-          }),
+        }),
         headers: {
-          'Authorization': 'Bearer $access1', 
+          'Authorization': 'Bearer $access1',
           'Content-Type': 'application/json',
         },
       );
-      
-      
+
       if (response.statusCode == 201) {
         Map<String, dynamic> responseBody = json.decode(response.body);
         //final likemessage = responseBody['message'];
         newcomm = responseBody['data'];
         print(newcomm);
-       // Navigator.push(
-         // context,
-          //MaterialPageRoute(builder: (context) => LoginScreen()),
-          //);
-      // User registration successful
-      // Upload image if available
-      //if (_image != null) {
-      // Code to upload image to server
-      // You can use packages like http or Dio for image uploa
-      //http.post(Uri.parse(url), body: {'image': _image});
+        // Navigator.push(
+        // context,
+        //MaterialPageRoute(builder: (context) => LoginScreen()),
+        //);
+        // User registration successful
+        // Upload image if available
+        //if (_image != null) {
+        // Code to upload image to server
+        // You can use packages like http or Dio for image uploa
+        //http.post(Uri.parse(url), body: {'image': _image});
         print('User registered successfully');
         return newcomm;
+      } else {
+        // User registration failed
+        print("after");
+        final responseData = jsonDecode(response.body);
+        final errorMessage = responseData['data'];
+        print('Registration failed: $responseData');
+        return newcomm;
       }
-      else {
-      // User registration failed
-          print("after");
-          final responseData = jsonDecode(response.body);
-          final errorMessage = responseData['data'];
-          print('Registration failed: $responseData');
-          return newcomm;
-      }
-    }
-    else {
+    } else {
       return newcomm;
       // Handle the case when _image is null
       print('Error: _image is null');
     }
-  
-    // Navigate to login page or do something else
 
-    
+    // Navigate to login page or do something else
   }
 
   void _updatePostText(String newText) {
@@ -151,25 +147,26 @@ class _CreatePostPageState extends State<CreatePostPage> {
               maxLines: 5,
             ),
             SizedBox(height: 12),
-              _image != null
-                  ? kIsWeb
-                      ? Image.network(_image!,
-                          height: 100, width: 100, fit: BoxFit.cover)
-                      : Image.file(File(_image!),
-                          height: 100, width: 100, fit: BoxFit.cover)
-                  : Text(
-                      'No image selected'), // Display a message if no image is selected
-              ElevatedButton(
-                onPressed: _getImage,
-                child: Text('Pick Image'),
-              ),
+            _image != null
+                ? kIsWeb
+                    ? Image.network(_image!,
+                        height: 100, width: 100, fit: BoxFit.cover)
+                    : Image.file(File(_image!),
+                        height: 100, width: 100, fit: BoxFit.cover)
+                : Text(
+                    'No image selected'), // Display a message if no image is selected
+            ElevatedButton(
+              onPressed: _getImage,
+              child: Text('Pick Image'),
+            ),
 
             SizedBox(height: 20),
             ElevatedButton(
-              onPressed: ()async  {
+              onPressed: () async {
                 Map<String, dynamic> ncomm = await sendpost();
                 //addPost(ncomm);
-                Provider.of<PostProvider>(context, listen: false).addPost(ncomm);
+                Provider.of<PostProvider>(context, listen: false)
+                    .addPost(ncomm);
                 // Here you could handle posting the text
                 _showPostConfirmation(postText);
               },
@@ -193,10 +190,10 @@ class _CreatePostPageState extends State<CreatePostPage> {
               onPressed: () {
                 Navigator.of(context).pop();
                 Navigator.pop(context); // Close the drawer
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => HomePage()),
-                  );
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => HomePage()),
+                );
               },
               child: Text('OK'),
             ),

@@ -50,3 +50,12 @@ Future<List<String?>> welcomeuser() async {
     // After the values are fetched, print the welcome message
     return [username,email,proimage,age,dob];
 }
+
+Future<void> deleteUserDataLocally() async {
+  final SharedPreferences prefs = await SharedPreferences.getInstance();
+  prefs.remove('username');
+  prefs.remove('email');
+  prefs.remove('profilephoto');
+  prefs.remove('age');
+  prefs.remove('dob');
+}
