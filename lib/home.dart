@@ -1,5 +1,7 @@
 import 'dart:convert';
 //import 'dart:ffi';
+import 'package:daraweb/post_provider.dart';
+import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'jwt.dart';
@@ -10,6 +12,7 @@ import "profile.dart";
 import 'createpost.dart';
 import 'userlogin.dart';
 import 'postdetails.dart';
+import "articledropdown .dart";
 
 Future<void> deleteThings() async {
   await AuthService.deleteTokens();
@@ -20,6 +23,7 @@ class Post {
   final int id;
   final String title;
   final String content;
+  final String category;
   final String? base64Image; // Define base64Image property
   List<dynamic> likes;
   List<dynamic> comments;
@@ -28,6 +32,7 @@ class Post {
     required this.id,
     required this.title,
     required this.content,
+    required this.category,
     this.base64Image, // Update constructor
     required this.likes,
     required this.comments,
@@ -55,6 +60,7 @@ class Post {
       id: json['id'],
       title: json['title'],
       content: json['content'],
+      category: json['category'],
       base64Image: json['base64Image'],
       likes: json['likes'] ?? [], // Initialize with empty list if null
       comments: json['comments'] ?? [], // Initialize with empty list if null
@@ -91,17 +97,6 @@ class Post {
   }
 }
 
-class PostProvider extends ChangeNotifier {
-  List<dynamic> _posts = [];
-
-  List<dynamic> get posts => _posts;
-
-  void addPost(Map<String, dynamic> newPost) {
-    posts.add(newPost);
-    notifyListeners(); // Notify listeners that the list has changed
-  }
-}
-
 String? username;
 String? email;
 String? proimage;
@@ -133,6 +128,32 @@ class _HomePageState extends State<HomePage> {
   void addPost(Post newPost) {
     setState(() {
       posts.add(newPost);
+    });
+  }
+
+  void navigateToPostDetailsPage(Post post) async {
+    // Navigate to PostDetailsPage and await for result
+    final updatedPost = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            PostDetailScreen(post: post, onRefresh: _refreshPage),
+      ),
+    );
+
+    // Update the post object with the modified data
+    if (updatedPost != null) {
+      setState(() {
+        post = updatedPost;
+      });
+    }
+  }
+
+  Future<void> _refreshPage() async {
+    // Simulate a network call to refresh data
+    //await Future.delayed(Duration(seconds: 2));
+    setState(() {
+      _postsFuture = fetchPosts(); // Update data
     });
   }
 
@@ -280,6 +301,7 @@ class _HomePageState extends State<HomePage> {
           id: postJson['id'],
           title: postJson['title'],
           content: postJson['content'],
+          category: postJson['category'],
           base64Image:
               postJson['image'], // Assuming 'image' field contains base64 image
           likes: List<dynamic>.from(postJson['like']),
@@ -294,453 +316,486 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    // Calculate the number of columns based on the screen width
+    //int crossAxisCount = (screenWidth / 150).floor();
+    int crossAxisCount;
+    if (screenWidth < 600) {
+      crossAxisCount = 1; // For small screens, use 2 columns
+    } else if (screenWidth < 1200) {
+      crossAxisCount = 2; // For medium screens, use 3 columns
+    } else {
+      crossAxisCount = 3; // For large screens, use 4 columns
+    }
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Home Page'),
-      ),
-      drawer: Drawer(
-        child: FutureBuilder<List<String?>>(
-            future: welcomeuser(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return CircularProgressIndicator(); // Display loading indicator while waiting
-              } else if (snapshot.hasError) {
-                return Text('Error: ${snapshot.error}');
-              } else {
-                // Snapshot data is a list with the results of both futures
-                final List<String?> data = snapshot.data!;
-                final String username = data[0] ?? "Unknown";
-                final String email = data[1] ?? "Unknown";
-                final String proimage = data[2] ?? "Unknown";
-                // Decoding base64 string into bytes
-                Uint8List bytes = base64Decode(proimage);
+        appBar: AppBar(
+          title: Text('Home Page'),
+        ),
+        drawer: Drawer(
+          child: FutureBuilder<List<String?>>(
+              future: welcomeuser(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return CircularProgressIndicator(); // Display loading indicator while waiting
+                } else if (snapshot.hasError) {
+                  return Text('Error: ${snapshot.error}');
+                } else {
+                  // Snapshot data is a list with the results of both futures
+                  final List<String?> data = snapshot.data!;
+                  final String username = data[0] ?? "Unknown";
+                  final String email = data[1] ?? "Unknown";
+                  final String proimage = data[2] ?? "Unknown";
+                  // Decoding base64 string into bytes
+                  Uint8List bytes = base64Decode(proimage);
 
-                // Creating an image widget from the bytes
-                Widget accountImage = Image.memory(
-                  bytes,
-                  width: 100, // Adjust width as needed
-                  height: 100, // Adjust height as needed
-                );
-                return ListView(children: [
-                  UserAccountsDrawerHeader(
-                    decoration: BoxDecoration(color: const Color(0xff764abc)),
-                    accountName: snapshot.connectionState ==
-                            ConnectionState.waiting
-                        ? Text(
-                            "Loading...") // Display loading indicator while waiting
-                        : Text(username ??
-                            "Unknown"), // Display username or "Unknown" if null
-                    accountEmail: Text(
-                      email,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    currentAccountPicture: accountImage,
-                  ),
-// Other properties..
-                  ListTile(
-                    leading: Icon(
-                      Icons.home,
-                    ),
-                    title: const Text('Profile'),
-                    onTap: () {
-                      Navigator.pop(context); // Close the drawer
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => Profile()),
-                      );
-                    },
-                  ),
-                  ListTile(
-                    leading: Icon(
-                      Icons.train,
-                    ),
-                    title: const Text('Page 1'),
-                    onTap: () {
-                      Navigator.pop(context);
-                    },
-                  ),
-                  username != "Oluwadara"
-                      ? ListTile(
-                          leading: Icon(
-                            Icons.publish,
-                          ),
-                          title: const Text('Create A Post'),
-                          onTap: () {
-                            Navigator.pop(context); // Close the drawer
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => CreatePostPage()),
-                            );
-                          },
-                        )
-                      : SizedBox.shrink(),
-                  ListTile(
-                    leading: Icon(
-                      Icons.settings,
-                    ),
-                    title: const Text('Settings'),
-                    onTap: () {
-                      Navigator.pop(context); // Close the drawer
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => HomePage()),
-                      );
-                    },
-                  ),
-                  ListTile(
-                    leading: Icon(
-                      Icons.logout,
-                    ),
-                    title: const Text('Log-Out'),
-                    onTap: () async {
-                      await deleteThings();
-                      Navigator.pop(context); // Close the drawer
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => LoginScreen()),
-                      );
-                    },
-                  ),
-                ]);
-              }
-            }),
-      ),
-
-      // Important: Remove any padding from the ListView.
-      body: FutureBuilder<List<Post>>(
-        future: _postsFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else {
-            posts = snapshot.data!;
-            return ListView.builder(
-              itemCount: posts.length,
-              itemBuilder: (context, index) {
-                final post = posts[index];
-                print(post.likes);
-                Color iconColor =
-                    post.isLikedByUser(username!) ? Colors.red : Colors.grey;
-                return ListTile(
-                  title: Text(post.title),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(post.content),
-                      SizedBox(height: 8),
-                      Text('Likes: ${post.likes.length}'),
-                      SizedBox(height: 4),
-                      Text('Comments: ${post.comments.length}'),
-                    ],
-                  ),
-                  leading: post.base64Image != null
-                      ? Image.memory(
-                          base64Decode(
-                              post.base64Image!), // Decode base64 image
-                          width: 50, // Adjust width as needed
-                          height: 50, // Adjust height as needed
-                          fit: BoxFit.cover,
-                        )
-                      : SizedBox.shrink(),
-                  trailing:
-                      //SizedBox(  // Example of using SizedBox to fix width
-                      //width: 120,
-                      Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          mainAxisSize: MainAxisSize
-                              .min, // Align items to the end of the row
-                          children: [
-                        IconButton(
-                          icon: Icon(Icons.favorite,
-                              color: _likeColor[post.id] = iconColor),
-                          //: icon: Icon(Icons.favorite,color: _likeColor[post.id]) ,
-                          onPressed: () async {
-                            Map<String, dynamic> like = await likeform(post.id);
-                            //print(like);
-                            if (post.isLikedByUser(username!)) {
-                              post.deleteLikeByUsername(username!);
-                              setState(() {
-                                iconColor = Colors.grey;
-                              });
-                              print(1); // Unlike the post
-                            } else {
-                              if (like != {}) {
-                                setState(() {
-                                  iconColor = Colors.red;
-                                });
-                                post.likes.add(like);
-                                print(2);
-                              }
-                            }
-                            // Implement like functionality
-                          },
+                  // Creating an image widget from the bytes
+                  Widget accountImage = Image.memory(
+                    bytes,
+                    width: 100, // Adjust width as needed
+                    height: 100, // Adjust height as needed
+                  );
+                  return ListView(children: [
+                    UserAccountsDrawerHeader(
+                      decoration: BoxDecoration(color: const Color(0xff764abc)),
+                      accountName: snapshot.connectionState ==
+                              ConnectionState.waiting
+                          ? Text(
+                              "Loading...") // Display loading indicator while waiting
+                          : Text(username ??
+                              "Unknown"), // Display username or "Unknown" if null
+                      accountEmail: Text(
+                        email,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
                         ),
-                        IconButton(
-                            icon: Icon(Icons.comment, color: Colors.blueAccent),
-                            //: icon: Icon(Icons.favorite,color: _likeColor[post.id]) ,
-                            onPressed: () async {
-                              showModalBottomSheet(
-                                context: context,
-                                builder: (BuildContext context) {
-                                  return StatefulBuilder(
-                                    builder: (BuildContext context,
-                                        StateSetter setState) {
-                                      return Container(
-                                        padding: EdgeInsets.all(16.0),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: <Widget>[
-                                            Expanded(
-                                              child: ListView.builder(
-                                                  itemCount:
-                                                      post.comments.length,
-                                                  itemBuilder:
-                                                      (context, index) {
-                                                    //final post = posts[index];
-                                                    final comments =
-                                                        post.comments[index];
-                                                    //print(comments);
-                                                    //print(post.likes);
-                                                    Color iconColor =
-                                                        post.isLikedByUser(
-                                                                username!)
-                                                            ? Colors.red
-                                                            : Colors.grey;
-                                                    //for (var i = 0; i < comments.length; i++) {
-                                                    //print
-                                                    //var comment = comments[i];
-                                                    //if (post.iscommentexisting(comments["author"]["username"])){
+                      ),
+                      currentAccountPicture: accountImage,
+                    ),
+// Other properties..
+                    ListTile(
+                      leading: Icon(
+                        Icons.person,
+                      ),
+                      title: const Text('Profile'),
+                      onTap: () {
+                        Navigator.pop(context); // Close the drawer
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => Profile()),
+                        );
+                      },
+                    ),
+                    ListTile(
+                      leading: Icon(
+                        Icons.home,
+                      ),
+                      title: const Text('Home'),
+                      onTap: () {
+                        Navigator.pop(context);
+                      },
+                    ),
+                    ListTile(
+                      leading: Icon(
+                        Icons.article_outlined,
+                      ),
+                      title: ArticlleDropdownWidget(),
+                      onTap: () {
+                        Navigator.pop(context); // Close the drawer
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => HomePage()),
+                        );
+                      },
+                    ),
+                    username != "Oluwadara"
+                        ? ListTile(
+                            leading: Icon(
+                              Icons.publish,
+                            ),
+                            title: const Text('Create A Post'),
+                            onTap: () {
+                              Navigator.pop(context); // Close the drawer
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => CreatePostPage()),
+                              );
+                            },
+                          )
+                        : SizedBox.shrink(),
+                    ListTile(
+                      leading: Icon(
+                        Icons.settings,
+                      ),
+                      title: const Text('Settings'),
+                      onTap: () {
+                        Navigator.pop(context); // Close the drawer
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => HomePage()),
+                        );
+                      },
+                    ),
+                    ListTile(
+                      leading: Icon(
+                        Icons.logout,
+                      ),
+                      title: const Text('Log-Out'),
+                      onTap: () async {
+                        await deleteThings();
+                        Navigator.pop(context); // Close the drawer
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => LoginScreen()),
+                        );
+                      },
+                    ),
+                  ]);
+                }
+              }),
+        ),
 
-                                                    return ListTile(
-                                                      leading: CircleAvatar(
-                                                        backgroundImage: MemoryImage(
-                                                            base64Decode(comments[
-                                                                        "author"]
-                                                                    ['profile']
-                                                                ['image'])),
-                                                        //child: Text('${index + 1}'),
-                                                      ),
-                                                      title: Text(
-                                                          comments["content"]),
-                                                      subtitle: Column(
+        // Important: Remove any padding from the ListView.
+        body: FutureBuilder<List<Post>>(
+            future: _postsFuture,
+            builder: (context, snapshot) {
+              return StatefulBuilder(
+                builder: (BuildContext context, StateSetter setState) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: CircularProgressIndicator());
+                  } else if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  } else {
+                    posts = snapshot.data!;
+                    return GridView.builder(
+                      //padding: const EdgeInsets.all(8.0),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossAxisCount, // Number of columns
+                        crossAxisSpacing:
+                            8.0, // Space between items horizontally
+                        mainAxisSpacing: 8.0, // Space between items vertically
+                        childAspectRatio: 1, // Adjust item aspect rati
+                      ),
+                      // scrollDirection: Axis.horizontal,
+                      itemCount: posts.length,
+                      itemBuilder: (context, index) {
+                        context.read<PostProvider>().fecthposttoseive(posts);
+                        
+                        final post = posts[index];
+                        if 
+                        //print(post.likes);
+                        Color iconColor = post.isLikedByUser(username!)
+                            ? Colors.red
+                            : Colors.grey;
+                        return Container(
+                            padding: const EdgeInsets.all(8),
+                            //color: Colors.white,
+                            child: Column(children: [
+                              Expanded(
+                                  child: MouseRegion(
+                                      cursor: SystemMouseCursors.click,
+                                      //child: //Positioned.fill(
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          // Handle tap
+                                          navigateToPostDetailsPage(post);
+                                          print('Image tapped');
+                                        },
+                                        child: post.base64Image != null
+                                            ? Image.memory(
+                                                base64Decode(post
+                                                    .base64Image!), // Decode base64 image
+                                                //width: 50, // Adjust width as needed
+                                                //height: 50, // Adjust height as needed
+                                                fit: BoxFit.cover,
+                                                width: double.infinity,
+                                                height: double.infinity,
+                                              )
+                                            : SizedBox.shrink(),
+                                        //)
+                                      ))),
+                              //Spacer(),
+                              ListTile(
+                                dense: true,
+                                //selectedTileColor: Colors.indigo,
+                                tileColor: Colors.indigo,
+                                selectedTileColor: Colors.blueAccent,
+                                title: Text(post.title),
+                                subtitle: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text('Likes: ${post.likes.length}'),
+                                      Text('Comments: ${post.comments.length}'),
+                                    ]),
+                                isThreeLine: true,
+                                //dense: true,
+                                trailing:
+                                    //SizedBox(  // Example of using SizedBox to fix width
+                                    //width: 120,
+                                    Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.end,
+                                        mainAxisSize: MainAxisSize
+                                            .min, // Align items to the end of the row
+                                        children: [
+                                      IconButton(
+                                        icon: Icon(Icons.favorite,
+                                            color: _likeColor[post.id] =
+                                                iconColor),
+                                        //: icon: Icon(Icons.favorite,color: _likeColor[post.id]) ,
+                                        onPressed: () async {
+                                          Map<String, dynamic> like =
+                                              await likeform(post.id);
+                                          //print(like);
+                                          if (post.isLikedByUser(username!)) {
+                                            post.deleteLikeByUsername(
+                                                username!);
+                                            setState(() {
+                                              iconColor = Colors.grey;
+                                            });
+                                            print(1); // Unlike the post
+                                          } else {
+                                            if (like != {}) {
+                                              setState(() {
+                                                iconColor = Colors.red;
+                                              });
+                                              post.likes.add(like);
+                                              print(2);
+                                            }
+                                          }
+                                          // Implement like functionality
+                                        },
+                                      ),
+                                      IconButton(
+                                          icon: Icon(Icons.comment,
+                                              color: Colors.blueAccent),
+                                          //: icon: Icon(Icons.favorite,color: _likeColor[post.id]) ,
+                                          onPressed: () async {
+                                            showModalBottomSheet(
+                                              context: context,
+                                              builder: (BuildContext context) {
+                                                return StatefulBuilder(
+                                                  builder: (BuildContext
+                                                          context,
+                                                      StateSetter setState) {
+                                                    return Container(
+                                                      padding:
+                                                          EdgeInsets.all(16.0),
+                                                      child: Column(
                                                         crossAxisAlignment:
                                                             CrossAxisAlignment
                                                                 .start,
-                                                        children: [
-                                                          //Text(post.content),
-                                                          SizedBox(height: 8),
+                                                        mainAxisSize:
+                                                            MainAxisSize.min,
+                                                        children: <Widget>[
+                                                          Expanded(
+                                                            child: ListView
+                                                                .builder(
+                                                                    itemCount: post
+                                                                        .comments
+                                                                        .length,
+                                                                    itemBuilder:
+                                                                        (context,
+                                                                            index) {
+                                                                      //final post = posts[index];
+                                                                      final comments =
+                                                                          post.comments[
+                                                                              index];
+                                                                      //print(comments);
+                                                                      //print(post.likes);
+                                                                      Color iconColor = post.isLikedByUser(
+                                                                              username!)
+                                                                          ? Colors
+                                                                              .red
+                                                                          : Colors
+                                                                              .grey;
+                                                                      //for (var i = 0; i < comments.length; i++) {
+                                                                      //print
+                                                                      //var comment = comments[i];
+                                                                      //if (post.iscommentexisting(comments["author"]["username"])){
+
+                                                                      return ListTile(
+                                                                        leading:
+                                                                            CircleAvatar(
+                                                                          backgroundImage:
+                                                                              MemoryImage(base64Decode(comments["author"]['profile']['image'])),
+                                                                          //child: Text('${index + 1}'),
+                                                                        ),
+                                                                        title: Text(
+                                                                            comments["content"]),
+                                                                        subtitle:
+                                                                            Column(
+                                                                          crossAxisAlignment:
+                                                                              CrossAxisAlignment.start,
+                                                                          children: [
+                                                                            //Text(post.content),
+                                                                            SizedBox(height: 8),
+                                                                            Text('Created At: ${comments["created_at"]}'),
+                                                                            SizedBox(height: 4),
+                                                                            Text('By: ${comments["author"]['username']}'),
+                                                                          ],
+                                                                        ),
+                                                                        //Text(comments["created_at"]),
+                                                                        trailing: username! ==
+                                                                                comments["author"]["username"]
+                                                                            ? Row(
+                                                                                mainAxisAlignment: MainAxisAlignment.end,
+                                                                                mainAxisSize: MainAxisSize.min, // Align items to the end of the row
+                                                                                children: [
+                                                                                    IconButton(
+                                                                                        icon: Icon(Icons.delete, color: Colors.red),
+                                                                                        onPressed: () async {
+                                                                                          bool status = await deletecommentform(comments["id"]);
+                                                                                          //print(status);
+                                                                                          if (status == true) {
+                                                                                            setState(() {
+                                                                                              //print('Before deletion: ${post.comments}');
+                                                                                              post.deletecommentByid(comments["id"]);
+                                                                                              //print('after deletion: ${post.comments}');
+                                                                                              //comments = post.comments;
+                                                                                            });
+                                                                                          }
+                                                                                          //print(comments);
+                                                                                        }),
+                                                                                    IconButton(
+                                                                                        icon: Icon(Icons.edit, color: Colors.grey),
+                                                                                        onPressed: () {
+                                                                                          setState(() {
+                                                                                            _commentController.text = comments["content"];
+                                                                                            editit = true;
+                                                                                            commentid = comments["id"];
+                                                                                          });
+                                                                                        })
+                                                                                  ])
+                                                                            : SizedBox.shrink(),
+                                                                      );
+                                                                    }),
+                                                          ),
                                                           Text(
-                                                              'Created At: ${comments["created_at"]}'),
-                                                          SizedBox(height: 4),
-                                                          Text(
-                                                              'By: ${comments["author"]['username']}'),
-                                                        ],
-                                                      ),
-                                                      //Text(comments["created_at"]),
-                                                      trailing: username! ==
-                                                              comments["author"]
-                                                                  ["username"]
-                                                          ? Row(
-                                                              mainAxisAlignment:
-                                                                  MainAxisAlignment
-                                                                      .end,
-                                                              mainAxisSize:
-                                                                  MainAxisSize
-                                                                      .min, // Align items to the end of the row
-                                                              children: [
-                                                                  IconButton(
-                                                                      icon: Icon(
-                                                                          Icons
-                                                                              .delete,
-                                                                          color: Colors
-                                                                              .red),
+                                                            'Add a comment',
+                                                            style: TextStyle(
+                                                                fontSize: 18.0),
+                                                          ),
+                                                          SizedBox(
+                                                              height: 10.0),
+                                                          TextField(
+                                                            controller:
+                                                                _commentController,
+                                                            decoration:
+                                                                InputDecoration(
+                                                              hintText:
+                                                                  'Enter your comment',
+                                                              border:
+                                                                  OutlineInputBorder(),
+                                                            ),
+                                                            maxLines: 1,
+                                                            keyboardType:
+                                                                TextInputType
+                                                                    .multiline,
+                                                          ),
+                                                          SizedBox(
+                                                              height: 10.0),
+                                                          Align(
+                                                              alignment: Alignment
+                                                                  .centerRight,
+                                                              child: editit ==
+                                                                      false
+                                                                  ? ElevatedButton(
                                                                       onPressed:
                                                                           () async {
-                                                                        bool
-                                                                            status =
-                                                                            await deletecommentform(comments["id"]);
-                                                                        //print(status);
-                                                                        if (status ==
-                                                                            true) {
+                                                                        Map<String,
+                                                                                dynamic>
+                                                                            newcomment =
+                                                                            await commentform(post.id,
+                                                                                _commentController.text);
+                                                                        print(
+                                                                            newcomment);
+                                                                        if (newcomment !=
+                                                                            {}) {
                                                                           setState(
                                                                               () {
-                                                                            //print('Before deletion: ${post.comments}');
-                                                                            post.deletecommentByid(comments["id"]);
-                                                                            //print('after deletion: ${post.comments}');
-                                                                            //comments = post.comments;
+                                                                            post.comments.add(newcomment);
+                                                                            _commentController.text =
+                                                                                "";
                                                                           });
                                                                         }
-                                                                        //print(comments);
-                                                                      }),
-                                                                  IconButton(
-                                                                      icon: Icon(
-                                                                          Icons
-                                                                              .edit,
-                                                                          color: Colors
-                                                                              .grey),
-                                                                      onPressed:
-                                                                          () {
-                                                                        setState(
-                                                                            () {
-                                                                          _commentController.text =
-                                                                              comments["content"];
-                                                                          editit =
-                                                                              true;
-                                                                          commentid =
-                                                                              comments["id"];
-                                                                        });
-                                                                      })
-                                                                ])
-                                                          : SizedBox.shrink(),
+
+                                                                        // Handle saving the comment or any action
+                                                                        //Navigator.pop(context); // Close the bottom sheet
+                                                                      },
+                                                                      child: Text(
+                                                                          'Post'),
+                                                                    )
+                                                                  : Row(
+                                                                      mainAxisAlignment:
+                                                                          MainAxisAlignment
+                                                                              .end,
+                                                                      mainAxisSize:
+                                                                          MainAxisSize
+                                                                              .min, // Align items to the end of the row
+                                                                      children: [
+                                                                          ElevatedButton(
+                                                                            // icon: Icon(Icons.close, color: Colors.grey),
+                                                                            onPressed:
+                                                                                () {
+                                                                              setState(() {
+                                                                                editit = false;
+                                                                                _commentController.text = "";
+                                                                              });
+                                                                            },
+                                                                            child:
+                                                                                Row(
+                                                                              mainAxisSize: MainAxisSize.min,
+                                                                              children: <Widget>[
+                                                                                Icon(Icons.close, color: Colors.red),
+                                                                                SizedBox(width: 8.0), // Adjust spacing as needed
+                                                                                Text('cancel'),
+                                                                              ],
+                                                                            ),
+                                                                          ),
+                                                                          ElevatedButton(
+                                                                            onPressed:
+                                                                                () async {
+                                                                              Map<String, dynamic> newcomment = await commentedit(commentid, _commentController.text);
+                                                                              print(newcomment);
+                                                                              if (newcomment != {}) {
+                                                                                setState(() {
+                                                                                  post.deletecommentByid(commentid);
+                                                                                  post.comments.add(newcomment);
+                                                                                  _commentController.text = "";
+                                                                                  editit = false;
+                                                                                });
+                                                                              }
+
+                                                                              // Handle saving the comment or any action
+                                                                              //Navigator.pop(context); // Close the bottom sheet
+                                                                            },
+                                                                            child:
+                                                                                Text('edit'),
+                                                                          ),
+                                                                        ])),
+                                                        ],
+                                                      ),
                                                     );
-                                                  }),
-                                            ),
-                                            Text(
-                                              'Add a comment',
-                                              style: TextStyle(fontSize: 18.0),
-                                            ),
-                                            SizedBox(height: 10.0),
-                                            TextField(
-                                              controller: _commentController,
-                                              decoration: InputDecoration(
-                                                hintText: 'Enter your comment',
-                                                border: OutlineInputBorder(),
-                                              ),
-                                              maxLines: 1,
-                                              keyboardType:
-                                                  TextInputType.multiline,
-                                            ),
-                                            SizedBox(height: 10.0),
-                                            Align(
-                                                alignment:
-                                                    Alignment.centerRight,
-                                                child: editit == false
-                                                    ? ElevatedButton(
-                                                        onPressed: () async {
-                                                          Map<String, dynamic>
-                                                              newcomment =
-                                                              await commentform(
-                                                                  post.id,
-                                                                  _commentController
-                                                                      .text);
-                                                          print(newcomment);
-                                                          if (newcomment !=
-                                                              {}) {
-                                                            setState(() {
-                                                              post.comments.add(
-                                                                  newcomment);
-                                                              _commentController
-                                                                  .text = "";
-                                                            });
-                                                          }
-
-                                                          // Handle saving the comment or any action
-                                                          //Navigator.pop(context); // Close the bottom sheet
-                                                        },
-                                                        child: Text('Post'),
-                                                      )
-                                                    : Row(
-                                                        mainAxisAlignment:
-                                                            MainAxisAlignment
-                                                                .end,
-                                                        mainAxisSize: MainAxisSize
-                                                            .min, // Align items to the end of the row
-                                                        children: [
-                                                            ElevatedButton(
-                                                              // icon: Icon(Icons.close, color: Colors.grey),
-                                                              onPressed: () {
-                                                                setState(() {
-                                                                  editit =
-                                                                      false;
-                                                                  _commentController
-                                                                      .text = "";
-                                                                });
-                                                              },
-                                                              child: Row(
-                                                                mainAxisSize:
-                                                                    MainAxisSize
-                                                                        .min,
-                                                                children: <Widget>[
-                                                                  Icon(
-                                                                      Icons
-                                                                          .close,
-                                                                      color: Colors
-                                                                          .red),
-                                                                  SizedBox(
-                                                                      width:
-                                                                          8.0), // Adjust spacing as needed
-                                                                  Text(
-                                                                      'cancel'),
-                                                                ],
-                                                              ),
-                                                            ),
-                                                            ElevatedButton(
-                                                              onPressed:
-                                                                  () async {
-                                                                Map<String,
-                                                                        dynamic>
-                                                                    newcomment =
-                                                                    await commentedit(
-                                                                        commentid,
-                                                                        _commentController
-                                                                            .text);
-                                                                print(
-                                                                    newcomment);
-                                                                if (newcomment !=
-                                                                    {}) {
-                                                                  setState(() {
-                                                                    post.deletecommentByid(
-                                                                        commentid);
-                                                                    post.comments
-                                                                        .add(
-                                                                            newcomment);
-                                                                    _commentController
-                                                                        .text = "";
-                                                                    editit =
-                                                                        false;
-                                                                  });
-                                                                }
-
-                                                                // Handle saving the comment or any action
-                                                                //Navigator.pop(context); // Close the bottom sheet
-                                                              },
-                                                              child:
-                                                                  Text('edit'),
-                                                            ),
-                                                          ])),
-                                          ],
-                                        ),
-                                      );
-                                    },
-                                  );
+                                                  },
+                                                );
+                                              },
+                                            );
+                                          })
+                                    ]),
+                                onTap: () {
+                                  navigateToPostDetailsPage(post);
+                                  // Navigate to post details page
                                 },
-                              );
-                            })
-                      ]),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => PostDetailScreen(
-                          post: post,
-                        ),
-                      ),
+                              )
+                            ]));
+                      },
                     );
-                    // Navigate to post details page
-                  },
-                );
-              },
-            );
-          }
-        },
-      ),
-    );
+                  }
+                },
+              );
+            }));
   }
 }

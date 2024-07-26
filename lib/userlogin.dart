@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'storesessionid.dart';
 import 'jwt.dart';
 import 'userdetails.dart';
 import 'package:http/http.dart' as http;
@@ -50,20 +49,20 @@ class _LoginScreenState extends State<LoginScreen> {
         final pro_image = responseBody['profilephoto'];
         final age = responseBody['age'];
         String dob = "";
-        if (responseBody['date_of_birth'] == null ){
+        if (responseBody['date_of_birth'] == null) {
           dob = "Unknown";
-        }else{
+        } else {
           dob = responseBody['date_of_birth'];
         }
         //final dob = responseBody['date_of_birth'];
-        await saveUserDataLocally(username, email, pro_image,age,dob);
-        String accessToken =responseBody['tokens']['access'];
+        await saveUserDataLocally(username, email, pro_image, age, dob);
+        String accessToken = responseBody['tokens']['access'];
         String refreshToken = responseBody['tokens']['refresh'];
         //print('Access Token: $accessToken');
         //print('Refresh Token: $refreshToken');
         await AuthService.saveTokens(accessToken, refreshToken);
         String? access1 = await AuthService.getAccessToken();
-        return response1.statusCode;  
+        return response1.statusCode;
         //print(access1);
         // Successful authentication, handle session ID or token
         // Extract session ID or token from response and store locally
@@ -71,22 +70,21 @@ class _LoginScreenState extends State<LoginScreen> {
         //final sessionId = response1.headers['session_id'];
         //final accesstoken = response1.body
         //if (sessionId != null) {
-          //storeSessionId(sessionId);
-          //print('Authentication successful!');
+        //storeSessionId(sessionId);
+        //print('Authentication successful!');
         //} else {
-          //print('something is wrong ');
+        //print('something is wrong ');
         //}
       } else {
         // Handle authentication failure
         print('Authentication failed: ${response1.statusCode}');
-        return response1.statusCode; 
+        return response1.statusCode;
       }
     } else {
-      return -100; 
+      return -100;
       // Handle error response
     }
     // Your authenticateUser function implementation goes here...
-
   }
 
   void _onLoginButtonPressed() async {
@@ -96,20 +94,18 @@ class _LoginScreenState extends State<LoginScreen> {
     if (username.isNotEmpty && password.isNotEmpty) {
       try {
         int status = await _authenticateUser(username, password);
-        if (status == 200){
+        if (status == 200) {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => HomePage()),
-            );
-          }else{
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => LoginScreen()),
-            );
-
-          }
+          );
+        } else {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => LoginScreen()),
+          );
+        }
         // Navigate to next screen upon successful authentication
-       
       } catch (e) {
         // Handle authentication error (e.g., show error message to user)
         print('Authentication failed: $e');

@@ -8,6 +8,7 @@ import 'createpost.dart';
 import 'user_reg.dart';
 import 'userlogin.dart';
 import "home.dart";
+import "articledropdown .dart";
 
 class NavDrawer extends StatelessWidget {
   @override
@@ -79,6 +80,19 @@ class NavDrawer extends StatelessWidget {
                     );
                   },
                 ),
+                ListTile(
+                  leading: Icon(
+                    Icons.article_outlined,
+                  ),
+                  title: ArticlleDropdownWidget(),
+                  onTap: () {
+                    Navigator.pop(context); // Close the drawer
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => HomePage()),
+                    );
+                  },
+                ),
                 username != "Oluwadara"
                     ? ListTile(
                         leading: Icon(
@@ -122,7 +136,6 @@ class NavDrawer extends StatelessWidget {
                     );
                   },
                 ),
-                
               ]);
             }
           }),

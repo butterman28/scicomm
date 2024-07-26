@@ -1,5 +1,5 @@
 //import 'package:flutter/material.dart';
-import 'storesessionid.dart';
+//import 'storesessionid.dart';
 import 'package:http/http.dart' as http;
 
 Future<void> authenticateUser(String username, String password) async {
@@ -18,7 +18,7 @@ Future<void> authenticateUser(String username, String password) async {
       // For example:
       final sessionId = response.headers['session_id'];
       if (sessionId != null) {
-        storeSessionId(sessionId);
+        //storeSessionId(sessionId);
         print('Authentication successful!');
       } else {
         print('something is wrong ');

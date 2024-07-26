@@ -1,3 +1,4 @@
+import 'package:daraweb/post_provider.dart';
 import 'package:flutter/material.dart';
 import 'jwt.dart';
 import 'home.dart';
@@ -7,7 +8,10 @@ import 'package:image_picker/image_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:io';
 import 'package:provider/provider.dart';
-//var x = Post.comments;
+import "dropdown.dart";
+
+//var x = _selectedItem;
+//String cat = "";
 
 class CreatePostPage extends StatefulWidget {
   @override
@@ -21,6 +25,10 @@ class _CreatePostPageState extends State<CreatePostPage> {
   String? _image;
   final picker = ImagePicker();
   List<int>? imageBytes;
+  void handleItemSelected(String? value) {
+    // Do something with the selected value
+    print('Selected item: $value');
+  }
 
   Future<void> _getImage() async {
     //final pickedImage = await ImagePickerWeb.pickImage(outputType: ImageType.bytes);
@@ -49,7 +57,8 @@ class _CreatePostPageState extends State<CreatePostPage> {
     });
   }
 
-  Future<dynamic> sendpost() async {
+  Future<dynamic> sendpost(String cat) async {
+    print(cat);
     String? access1 = await AuthService.getAccessToken();
     String base64Image;
     Map<String, dynamic> newcomm = {};
@@ -62,12 +71,15 @@ class _CreatePostPageState extends State<CreatePostPage> {
       base64Image = base64Encode(imageBytes!);
       //print(base64Image);
       const url = 'http://127.0.0.1:8000/blog/post/';
+      print("beforecat");
       final response = await http.post(
         Uri.parse(url),
         body: jsonEncode({
           'title': _titleController.text,
           'content': _contentController.text,
           'image': base64Image,
+          'category': cat
+
           // You can include additional fields as needed
         }),
         headers: {
@@ -127,6 +139,10 @@ class _CreatePostPageState extends State<CreatePostPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
+            DropdownWidget(onItemSelected: handleItemSelected),
+            SizedBox(
+              height: 12,
+            ),
             TextField(
               controller: _titleController,
               decoration: InputDecoration(
@@ -163,7 +179,9 @@ class _CreatePostPageState extends State<CreatePostPage> {
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: () async {
-                Map<String, dynamic> ncomm = await sendpost();
+                String newcat = context.read<PostProvider>().readcategory();
+                print(newcat + "411");
+                Map<String, dynamic> ncomm = await sendpost(newcat);
                 //addPost(ncomm);
                 Provider.of<PostProvider>(context, listen: false)
                     .addPost(ncomm);
